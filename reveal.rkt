@@ -3,7 +3,7 @@
 (provide
  slide-group slide gslide
  L t C CB ~ ~~ L~
- url image fragment color th* td* simple-table
+ url image fragment color th* td* tL tR tC simple-table
  *white* *gray* *blue* *light-blue* *red* *light-red* *green* *light-green*
  ;; comment
  reveal)
@@ -154,6 +154,10 @@
         (when fragment? data-fragment-index:) (when fragment? 1)
         (spacing right))
        (td width: td-width))))
+
+(define (tC (x '())) (td style: "text-align: center; border: none;" x))
+(define (tL (x '())) (td style: "text-align: left; border: none;" x))
+(define (tR (x '())) (td style: "text-align: right; border: none;" x))
 
 (define (simple-table contents)
   (letrec ((line (lambda (th . tds) (cons (th* th) (map td* tds))))
