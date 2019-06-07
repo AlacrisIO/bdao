@@ -120,7 +120,7 @@
 @L{Still "Shotgunning" structural integrity checks}
 @L{Somewhat slow, only so safe, painful in OCaml}
 ~
-@fragment[@L{Missing the whole point of OCaml}])
+@fragment[@C{Missing the whole point of OCaml}])
 
 (gslide () @h1{Level 3: Marshaling messages by hand}
   @L{@ocaml{process_request: request -> response}}
@@ -168,27 +168,34 @@ val marshaling2 : ('x -> 'a*'b) -> ('a -> 'b -> 'x) -> @(br)
 
 (gslide () @h1{Content-Addressed Storage}
   @L{Same graph-reduction model as all common functional languages}
-  @L{Pointer: content digest, not memory addresses}
+  @L{Pointer: not memory address, but content digest}
   ~
-  @L{Assume standard cryptographic assumptions}
+  @L{Standard cryptographic assumptions}
   @L{DAG-only, no cycles}
   @comment{Usual tricks to encode cyclical structures apply}
   ~
   @L{@ocaml{
-let db_value_of_digest unmarshal_string digest =
-  digest |> db_key_of_digest |> Db.get |> Option.get |> unmarshal_string
+let db_value_of_digest unmarshal_string digest = @(br)
+  digest |> db_key_of_digest |> @(br)
+  Db.get |> Option.get |> unmarshal_string
 }})
 
 (gslide () @h1{Abstracting Content-Addressing}
    @L{General wrapper interface}
-@ocaml{
-module type WrapS = sig
-  type t
-  type value
-  val get: t -> value
-  val make: value -> t
+~
+#;@L{@ocaml{
+module type WrapS = sig @(br)
+  type t @(br)
+  type value @(br)
+  val get: t -> value @(br)
+  val make: value -> t @(br)
 end
-}
+}}
+@L{@ocaml{
+type +'a wrap @(br)
+type t = trie wrap @(br)
+and trie = Leaf of value @(br)
+  | Branch of {left: t; right: t}}}
   ~
   @L{Identity vs lazy-loading from content-addressed store}
   ~
@@ -206,45 +213,52 @@ end
 (gslide () @h1{Lenses}
   @L{Usual pure functional read/write accessors.}
   ~
-@ocaml{type ('a, 'b) t = { get : 'a -> 'b; set : 'b -> 'a -> 'a }}
+@L{@ocaml{type ('a, 'b) t = @(br)
+  { get : 'a -> 'b; set : 'b -> 'a -> 'a }}}
 @comment{There are more elaborate categorical representations,
          but that's not my point here}
   ~
-  @L{Do all modifications in pure style, @(hr)
+  @L{Do all modifications in pure style, @(br)
     then monotonically update the state variables})
 
-(gslide () @h1{Zipping through a tree}
-  @ocaml{
+(gslide () @h1{Zippers}
+  @L{kind of an @ocaml{('a, 'a) lens} as @em{data}, not function @(br)
+     Can be generalized to paths in more complex data structures.}
+  ~
+  @L{Zipping through a binary tree:}
+  ~
+  @L{@ocaml{
 type (+'a) path @(br)
-val path_map: ('a -> 'b) -> 'a path -> 'b path @(br)
 type zipper = t * t path @(br)
-val zip : t -> zipper @(br)
 val unzip : zipper -> t @(br)
 val find_path : key -> t -> zipper
-  })
+val path_map: ('a -> 'b) -> 'a path -> 'b path @(br)
+  }})
 
 (gslide () @h1{Merklization}
   @L{Merklize: make computations verifiable}
+  ~
   @L{Zippers-as-data trivialize merklization:}
-  @ocaml{
-let merkle_proof key mt =
-  match map_fst Wrap.get (find_path key mt) with
-    | Leaf {value}, up ->
-        Some { key ; trie = node_digest mt
-             ; leaf = merklize_leaf value
-             ; steps = (path_map node_digest up).steps }
-    | _ -> None}))
+  ~
+  @L{@ocaml{
+let merkle_proof key mt = @(br)
+  match map_fst Wrap.get (find_path key mt) with @(br)
+    | Leaf {value}, up -> @(br)
+        Some { key ; trie = dv_digest mt @(br)
+             ; leaf = merklize_leaf value @(br)
+             ; steps = (path_map dv_digest up).steps } @(br)
+    | _ -> None}}))
 
 
 (slide-group "Types: Benefits and Costs"
 (gslide () @h1{Why use OCaml rather than Lisp?}
   @L{Cryptocurrency applications: can't afford a single bug.}
   ~
-  @L{Types can find bugs @em{before} deployment.}
+  @L{Static types can find bugs @em{before} deployment.}
   ~
   @L{Types critical to communicate design constraints to coworkers.}
   ~
-  @L{Parametricity enables robust abstraction over many levels of semantics}
+  @L{Parametricity enables robust abstraction at many levels}
   ~
   @L{Putting types first makes you ask important questions.})
 
@@ -313,7 +327,7 @@ let merkle_proof key mt =
 it doesn't magically insert meaningful error handlers for you.
 }
   @L~
-  @fragment{C{Still, by restricting interactions,
+  @fragment{@C{Still, by restricting interactions,
      bugs are not just fewer, but simpler @(br)
      — they fit a brainful.}})
 
@@ -388,7 +402,7 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
 
 (slide-group "Future Improvements to Typesystems"
 
-(gslide () "Objects done right"
+(gslide () @h1{Objects done right}
  @L{OCaml modules don't support late binding or fix-pointing}
  @L{OCaml objects are limited in many ways}
  ~
@@ -398,7 +412,7 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
  ~
  @L{Multimethods? Method combinations? Meta-object protocol?})
 
-(gslide () "Schema Upgrade"
+(gslide () @h1{Schema Upgrade}
  @L{A real program works on persistent data}
  ~
  @L{Modern programming languages only create toys}
@@ -407,7 +421,7 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
  ~
  @L{Lisp supports schema upgrade. Can static types do it?})
 
-(gslide () "Better Effect Typing and Syntax"
+(gslide () @h1{Better Effect Typing and Syntax}
   @L{Monads are semantically awkward}
   ~
   @L{Monad notation is syntactically horrible}
@@ -416,7 +430,7 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
   ~
   @L{One man's pure bliss is another man's effects})
 
-(gslide () "Compile-time Reflection"
+(gslide () @h1{Compile-time Reflection}
  ~
  @L{Refinement logic --- relating layers of abstraction, correctly}
  ~
@@ -427,28 +441,30 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
  ~
  @L{A composable alternative to PPX... macros?})
 
-(gslide () "Reconciling Types and Macros"
+(gslide () @h1{Reconciling Types and Macros}
  @L{Anything information used by a macro is a type: @(br)
     compile-time information deduced from the source.}
  ~
  @L{Any type-level programming is a macro: @(br)
     compile-time transformation of source code.}
  ~
- @C{WHY CAN'T I HAVE BOTH, COMPOSABLY?}
+ @fragment{@C{WHY CAN'T I HAVE BOTH, COMPOSABLY?}}
  ~
- @fragment{@C{"Type Systems as Macros" by Chang, Knauth, Greenman}})
+ @fragment{@C{"Type Systems as Macros" by Chang, Knauth, Greenman @(br)
+              Hackett}})
  ;; http://www.ccs.neu.edu/home/stchang/popl2017/
 
-(gslide () "Runtime Reflection"
+(gslide () @h1{Runtime Reflection}
  @L{Providing safety and performance to dynamic code, too}
  ~
  @L{Virtualization: Separate fore-program from controlling back-program}
  ~
  @L{Instrumentation: Natural transformations on implementations}
  ~
- @L{Code Migration.}
+ @L{Code Migration. Native GC…}
+ @C{GC integration with monotonic database cache}
  ~
- @L{Native GC, integrated with monotonic database cache…}))
+ @fragment{@R{… See my previous talk on first-class implementatoins}}))
 
 (slide-group "Conclusion"
  (take-home #:redux #t)
