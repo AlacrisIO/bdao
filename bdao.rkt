@@ -53,9 +53,9 @@
     @L{Typed FP enables robust programming at scale}
     ;; thanks to the power of abstraction and composition. ; TODO: slides for that?
     ~
-    @L{You pay a steep price for it}
-    ~
     @L{Monotonic FP is especially fit for distributed applications}
+    ~
+    @L{You pay a steep price for types}
     ~
     @L{To improve Typed FP: better types & metaprogramming}))
 
@@ -148,6 +148,92 @@ val marshaling2 : ('x -> 'a*'b) -> ('a -> 'b -> 'x) -> @(br)
   @L{Problem: even tougher to use with PPX}
    @comment{Many popular PPX libraries we use don't work well with GADT}
   @L{Still a TBD item for us})); Marshaling
+
+
+(slide-group "Monotonic Programming"
+(gslide () @h1{Monotonicity}
+  @L{Purity: no state change}
+  @L{Monotonicity: one-way state may change}
+  ~
+  @L{Knowledge can increase, never be invalidated}
+  @L{Least fixed-point algorithms. Git. CRDTs. Append-only logs.}
+  ~
+  @L{Lazy is already monotonic, not pure}
+  @comment{
+     If everything always terminates, lazy is same as eager.
+     If not, there's already a side-effect that makes it not pure.
+  }
+  @L{But no computation can live to tell the difference}
+  @comment{... which is exactly the point of monotonic.})
+
+(gslide () @h1{Content-Addressed Storage}
+  @L{Same graph-reduction model as all common functional languages}
+  @L{Pointer: content digest, not memory addresses}
+  ~
+  @L{Assume standard cryptographic assumptions}
+  @L{DAG-only, no cycles}
+  @comment{Usual tricks to encode cyclical structures apply}
+  ~
+  @L{@ocaml{
+let db_value_of_digest unmarshal_string digest =
+  digest |> db_key_of_digest |> Db.get |> Option.get |> unmarshal_string
+}})
+
+(gslide () @h1{Abstracting Content-Addressing}
+   @L{General wrapper interface}
+@ocaml{
+module type WrapS = sig
+  type t
+  type value
+  val get: t -> value
+  val make: value -> t
+end
+}
+  ~
+  @L{Identity vs lazy-loading from content-addressed store}
+  ~
+  @L{Higher-Order modules to abstract over persistence of not})
+
+(gslide () @h1{Is it an effect?}
+  @L{Escape to impure behavior}
+  @L{Pure at one level, impure at another}
+  @L{Same for logging}
+  @fragment{@L{Same for lazy evaluation}}
+  @fragment{@L{Same for allocation!}}
+  @fragment{@C{Same for everything!!!}}
+  @comment{See my previous talk on first-class implementations})
+
+(gslide () @h1{Lenses}
+  @L{Usual pure functional read/write accessors.}
+  ~
+@ocaml{type ('a, 'b) t = { get : 'a -> 'b; set : 'b -> 'a -> 'a }}
+@comment{There are more elaborate categorical representations,
+         but that's not my point here}
+  ~
+  @L{Do all modifications in pure style, @(hr)
+    then monotonically update the state variables})
+
+(gslide () @h1{Zipping through a tree}
+  @ocaml{
+type (+'a) path @(br)
+val path_map: ('a -> 'b) -> 'a path -> 'b path @(br)
+type zipper = t * t path @(br)
+val zip : t -> zipper @(br)
+val unzip : zipper -> t @(br)
+val find_path : key -> t -> zipper
+  })
+
+(gslide () @h1{Merklization}
+  @L{Merklize: make computations verifiable}
+  @L{Zippers-as-data trivialize merklization:}
+  @ocaml{
+let merkle_proof key mt =
+  match map_fst Wrap.get (find_path key mt) with
+    | Leaf {value}, up ->
+        Some { key ; trie = node_digest mt
+             ; leaf = merklize_leaf value
+             ; steps = (path_map node_digest up).steps }
+    | _ -> None}))
 
 
 (slide-group "Types: Benefits and Costs"
@@ -299,91 +385,6 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
     do-notation is a half-assed idea, and
     those who see it as the summum of monadic notation are brain-damaged)
   }))
-
-(slide-group "Monotonic Programming"
-(gslide () @h1{Monotonicity}
-  @L{Purity: no state change}
-  @L{Monotonicity: one-way state may change}
-  ~
-  @L{Knowledge can increase, never be invalidated}
-  @L{Least fixed-point algorithms. Git. CRDTs. Append-only logs.}
-  ~
-  @L{Lazy is already monotonic, not pure}
-  @comment{
-     If everything always terminates, lazy is same as eager.
-     If not, there's already a side-effect that makes it not pure.
-  }
-  @L{But no computation can live to tell the difference}
-  @comment{... which is exactly the point of monotonic.})
-
-(gslide () @h1{Content-Addressed Storage}
-  @L{Same graph-reduction model as all common functional languages}
-  @L{Pointer: content digest, not memory addresses}
-  ~
-  @L{Assume standard cryptographic assumptions}
-  @L{DAG-only, no cycles}
-  @comment{Usual tricks to encode cyclical structures apply}
-  ~
-  @L{@ocaml{
-let db_value_of_digest unmarshal_string digest =
-  digest |> db_key_of_digest |> Db.get |> Option.get |> unmarshal_string
-}})
-
-(gslide () @h1{Abstracting Content-Addressing}
-   @L{General wrapper interface}
-@ocaml{
-module type WrapS = sig
-  type t
-  type value
-  val get: t -> value
-  val make: value -> t
-end
-}
-  ~
-  @L{Identity vs lazy-loading from content-addressed store}
-  ~
-  @L{Higher-Order modules to abstract over persistence of not})
-
-(gslide () @h1{Is it an effect?}
-  @L{Escape to impure behavior}
-  @L{Pure at one level, impure at another}
-  @L{Same for logging}
-  @fragment{@L{Same for lazy evaluation}}
-  @fragment{@L{Same for allocation!}}
-  @fragment{@C{Same for everything!!!}}
-  @comment{See my previous talk on first-class implementations})
-
-(gslide () @h1{Lenses}
-  @L{Usual pure functional read/write accessors.}
-  ~
-@ocaml{type ('a, 'b) t = { get : 'a -> 'b; set : 'b -> 'a -> 'a }}
-@comment{There are more elaborate categorical representations,
-         but that's not my point here}
-  ~
-  @L{Do all modifications in pure style, @(hr)
-    then monotonically update the state variables})
-
-(gslide () @h1{Zipping through a tree}
-  @ocaml{
-type (+'a) path @(br)
-val path_map: ('a -> 'b) -> 'a path -> 'b path @(br)
-type zipper = t * t path @(br)
-val zip : t -> zipper @(br)
-val unzip : zipper -> t @(br)
-val find_path : key -> t -> zipper
-  })
-
-(gslide () @h1{Merklization}
-  @L{Merklize: make computations verifiable}
-  @L{Zippers-as-data trivialize merklization:}
-  @ocaml{
-let merkle_proof key mt =
-  match map_fst Wrap.get (find_path key mt) with
-    | Leaf {value}, up ->
-        Some { key ; trie = node_digest mt
-             ; leaf = merklize_leaf value
-             ; steps = (path_map node_digest up).steps }
-    | _ -> None}))
 
 (slide-group "Future Improvements to Typesystems"
 
