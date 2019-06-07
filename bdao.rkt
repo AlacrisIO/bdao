@@ -387,6 +387,45 @@ let merkle_proof key mt =
 
 (slide-group "Future Improvements to Typesystems"
 
+(gslide () "Objects done right"
+ @L{OCaml modules don't support late binding or fix-pointing}
+ @L{OCaml objects are limited in many ways}
+ ~
+ @L{Nix: prototype inheritance in 6 short library functions} ;; 99 characters of Scheme.
+ @L{You can't type prototypes in OCaml (or Haskell, etc.)}
+ @C{You need appendable row types}
+ ~
+ @L{Multimethods? Method combinations? Meta-object protocol?})
+
+(gslide () "Schema Upgrade"
+ @L{A real program works on persistent data}
+ ~
+ @L{Modern programming languages only create toys}
+ ~
+ @L{Non-toys use databases. But they have horrible PLs!}
+ ~
+ @L{Lisp supports schema upgrade. Can static types do it?})
+
+(gslide () "Better Effect Typing and Syntax"
+  @L{Monads are semantically awkward}
+  ~
+  @L{Monad notation is syntactically horrible}
+  ~
+  @L{NB: Jane Street is funding effect typing for OCaml}
+  ~
+  @L{One man's pure bliss is another man's effects})
+
+(gslide () "Compile-time Reflection"
+ ~
+ @L{Refinement logic --- relating layers of abstraction, correctly}
+ ~
+ @L{Make explicit multiple levels of computations}
+ ~
+ @L{Extending the type with domain-specific logic fragments: @(br)
+    linear (URAL…), modal (temporal, epistemic…), finitary, etc.}
+ ~
+ @L{A composable alternative to PPX... macros?})
+
 (gslide () "Reconciling Types and Macros"
  @L{Anything information used by a macro is a type: @(br)
     compile-time information deduced from the source.}
@@ -397,23 +436,18 @@ let merkle_proof key mt =
  @C{WHY CAN'T I HAVE BOTH, COMPOSABLY?}
  ~
  @fragment{@C{"Type Systems as Macros" by Chang, Knauth, Greenman}})
+ ;; http://www.ccs.neu.edu/home/stchang/popl2017/
 
-(gslide () "Objects done right"
- @L{OCaml modules don't support late binding or fix-pointing}
- @L{OCaml objects are limited in many ways}
+(gslide () "Runtime Reflection"
+ @L{Providing safety and performance to dynamic code, too}
  ~
- @L{Nix: prototype inheritance in 6 short library functions} ;; 99 characters of Scheme.
- @L{You can't type prototypes in OCaml (or Haskell, etc.)}
- @C{You need appendable row types})
-
-(gslide () "Schema Upgrade"
- @L{A real program works on persistent data}
+ @L{Virtualization: Separate fore-program from controlling back-program}
  ~
- @L{Modern programming languages only create toys}
+ @L{Instrumentation: Natural transformations on implementations}
  ~
- @L{Non-toys use databases. But they have horrible PLs!}
+ @L{Code Migration.}
  ~
- @L{Lisp supports schema upgrade. Can static types do it?}))
+ @L{Native GC, integrated with monotonic database cache…}))
 
 (slide-group "Conclusion"
  (take-home #:redux #t)
@@ -447,4 +481,3 @@ let merkle_proof key mt =
 
 ;; Why wouldn't have had any chance of delivering without this infrastructure without this.
 ;; Lisp OO vs OCaml modules
-
