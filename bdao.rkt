@@ -199,7 +199,7 @@ and trie = Leaf of value @(br)
   ~
   @L{Identity vs lazy-loading from content-addressed store}
   ~
-  @L{Higher-Order modules to abstract over persistence of not})
+  @L{Higher-Order modules to abstract over persistence or not})
 
 (gslide () @h1{Is it an effect?}
   @L{Escape to impure behavior}
@@ -464,7 +464,7 @@ you have to write everything in CPS or ANF rather than direct style, and vice-ve
  @L{Code Migration. Native GC…}
  @C{GC integration with monotonic database cache}
  ~
- @fragment{@R{… See my previous talk on first-class implementatoins}}))
+ @fragment{@R{… See my previous talk on first-class implementations}}))
 
 (slide-group "Conclusion"
  (take-home #:redux #t)
